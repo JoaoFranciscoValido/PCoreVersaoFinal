@@ -1,0 +1,39 @@
+﻿@model IEnumerable<PCore.Models.Categorias>
+
+@{ ViewData["Title"] = "Categorias"; }
+
+<h1>Categorias</h1>
+<br />
+
+
+@if (User.IsInRole("Gestor"))
+{
+<p>
+    <a class="btn btn-primary" asp-action="Create">Criar Categoria</a>
+</p>}
+
+<table class="table">
+    <thead>
+        <tr>
+
+            <th></th>
+        </tr>
+    </thead>
+    <tbody style="background: #ece3f7;">
+        @foreach (var item in Model)
+        {
+<tr>
+    <td style="resize:none; width:1200px;">
+        <a class="nav-link text-dark " style=" font-size: 40px; text-align:center" asp-action="Details" asp-route-id="@item.IdCategorias">@Html.DisplayFor(modelItem => item.Nome)</a>
+    </td>
+    @if (User.IsInRole("Gestor"))
+    {
+<td>
+    <a class="btn btn-primary" asp-action="Edit" asp-route-id="@item.IdCategorias">Editar</a>
+    <br />
+    <br />
+    <a class="btn btn-delete" asp-action="Delete" asp-route-id="@item.IdCategorias">Eliminar</a>
+</td>}
+</tr>}
+    </tbody>
+</table>

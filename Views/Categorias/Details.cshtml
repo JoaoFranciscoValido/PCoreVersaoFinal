@@ -1,0 +1,31 @@
+﻿@model PCore.Models.Categorias
+
+@{ ViewData["Title"] = @Model.Nome; }
+
+<h1>@Model.Nome</h1>
+<br />
+<br />
+
+<div>
+    @foreach (var item in Model.ListaDeComponentes)
+    {
+<div class="Componente">
+    <a asp-action="Details" asp-controller="Componentes" asp-route-id="@item.IdComponentes">
+        <img class="FotoComponente" src="~/fotos/@Html.DisplayFor(modelItem => item.Foto)" />
+        <div class="overlay">
+            <div class="text">
+                @Html.DisplayFor(modelItem => item.Nome)
+            </div>
+        </div>
+    </a>
+</div>}
+</div>
+
+
+@*
+    <div>
+        @if (User.IsInRole("Gestor"))
+        {
+    <a button class="btn btn-primary" asp-action="Edit" asp-route-id="@Model.IdCategorias">Edit</a>}
+    </div>
+*@

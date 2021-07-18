@@ -1,0 +1,24 @@
+﻿@model IEnumerable<PCore.Models.Carrinho>
+
+@{
+    ViewData["Title"] = "Carrinho";
+}
+
+<h1>Carrinho</h1><br />
+
+
+@foreach (var item in Model) {
+    if (item.Utilizador.Email == User.Identity.Name) {
+        <div class="Componente">
+            <a asp-action="Details" asp-controller="Componentes" asp-route-id="@item.Componente.IdComponentes">
+                <img class="FotoComponente" src="~/fotos/@Html.DisplayFor(modelItem => item.Componente.Foto)" />
+                <div class="overlay">
+                    <div class="text">
+                        @Html.DisplayFor(modelItem => item.Componente.Nome)
+                    </div>
+                </div>
+            </a>
+        </div>
+    }
+        
+}

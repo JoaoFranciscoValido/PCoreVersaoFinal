@@ -1,0 +1,32 @@
+﻿@model IEnumerable<PCore.Models.Componentes>
+
+@{ ViewData["Title"] = "Componentes"; }
+<head>
+    <link rel="stylesheet" href="~/css/ImagensComponentes.css" />
+</head>
+<h1>Lista de Componentes</h1>
+
+<br />
+
+@if (User.IsInRole("Gestor"))
+{
+<div>
+    <button class="btn btn-primary" onclick="location.href = 'https://localhost:44354/Componentes/Create'">Adicionar Componente</button>
+</div>
+                <br />}
+
+@foreach (var item in Model)
+{
+
+<div class="Componente">
+    <a asp-action="Details" asp-route-id="@item.IdComponentes">
+        <img class="FotoComponente" src="~/fotos/@Html.DisplayFor(modelItem => item.Foto)" />
+        <div class="overlay">
+            <div class="text">
+                @Html.DisplayFor(modelItem => item.Nome)
+            </div>
+        </div>
+    </a>
+</div>}
+
+
