@@ -1,6 +1,12 @@
 ﻿@model PCore.Models.Componentes
 
-@{ ViewData["Title"] = @Html.DisplayFor(model => model.Nome); }
+@{ ViewData["Title"] = @Html.DisplayFor(model => model.Nome);
+
+    string selecionado = "";
+
+    }
+
+
 
 <h1>@Html.DisplayFor(model => model.Nome) <br /></h1>
 
@@ -10,7 +16,7 @@
         <img src="~/fotos/@Html.DisplayFor(model => model.Foto)"
              width="200" />
     </div>
-    <div style="line-height:2;  ">
+    <div class="detalhes" @*style="line-height:2;"*@  >
         <b> Nome:</b>
         @Html.DisplayFor(model => model.Nome) <br />
 
@@ -24,17 +30,20 @@
         @Html.DisplayFor(model => model.Stock)<br />
 
         <b>Categoria: </b>
+        
         @foreach (var item in Model.ListaDeCategorias) {
             <a asp-controller="Categorias" asp-action="Details" asp-route-id="@item.IdCategorias" style="margin-right:5px;">@item.Nome</a>
-        }<br />
+        }
+        
+        <br />
+        <br />
 
         @if (User.IsInRole("Gestor")) {
             <div>
-                <button class="btn btn-delete" onclick="location.href = '@Url.Action("Delete", "Componentes", new { id = Model.IdComponentes })'">Eliminar Componente</button>
+                <button class="btn btn-delete text-light" onclick="location.href = '@Url.Action("Delete", "Componentes", new { id = Model.IdComponentes })'">Eliminar Componente</button>
             </div><br />
 
         }
-
 
     </div>
 
@@ -48,7 +57,7 @@
             @if (ViewBag.Carrinho == false) {
                 <input class="btn btn-primary" type="submit" value="Adicionar ao Carrinho"  />
             } else {
-                <input class="btn btn-delete" type="submit" value="Remover do Carrinho"  />
+                <input class="btn btn-delete text-light" type="submit" value="Remover do Carrinho"  />
             }
             
         </form>
@@ -82,13 +91,13 @@
     </div><br />
     @if (User.IsInRole("Gestor")) {
     <div>
-        <button class="btn btn-delete" onclick="location.href = '@Url.Action("Delete", "Reviews", new { id = item.IdReview })'">Eliminar</button>
+        <button class="btn btn-delete text-light" onclick="location.href = '@Url.Action("Delete", "Reviews", new { id = item.IdReview })'">Eliminar</button>
     </div><br /> } 
         @if (User.IsInRole("Cliente")) {
             if (item.Utilizador.Email == User.Identity.Name) {
     <div>
         @*<button class="btn btn-primary" onclick="location.href = '@Url.Action("Edit", "Reviews", new { id = item.IdReview })'">Editar</button>*@
-        <button class="btn btn-delete" onclick="location.href = '@Url.Action("Delete", "Reviews", new { id = item.IdReview })'">Eliminar</button>
+        <button class="btn btn-delete text-light" onclick="location.href = '@Url.Action("Delete", "Reviews", new { id = item.IdReview })'">Eliminar</button>
     </div><br />
             }
     

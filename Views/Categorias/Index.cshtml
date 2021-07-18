@@ -13,12 +13,7 @@
 </p>}
 
 <table class="table">
-    <thead>
-        <tr>
-
-            <th></th>
-        </tr>
-    </thead>
+   
     <tbody style="background: #ece3f7;">
         @foreach (var item in Model)
         {
@@ -32,7 +27,7 @@
     <a class="btn btn-primary" asp-action="Edit" asp-route-id="@item.IdCategorias">Editar</a>
     <br />
     <br />
-    <a class="btn btn-delete" asp-action="Delete" asp-route-id="@item.IdCategorias">Eliminar</a>
+    <a class="btn btn-delete text-light" asp-action="Delete" asp-route-id="@item.IdCategorias">Eliminar</a>
 </td>}
 </tr>}
     </tbody>

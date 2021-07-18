@@ -64,7 +64,8 @@ namespace PCore.Controllers
                 .ThenInclude(r => r.Utilizador)
                 .OrderByDescending(f => f.Nome)
                 .Include(fc => fc.ListaDeCategorias)
-                .FirstOrDefaultAsync();
+                .FirstOrDefaultAsync(m => m.IdComponentes == id);
+
             if (componente == null)
             {
                 return NotFound();
@@ -75,6 +76,8 @@ namespace PCore.Controllers
 
                 var favorito = await _context.Carrinho.Where(f => f.ComponentesFK == id && f.UtilizadoresFK == utilizador.IdUtilizador).FirstOrDefaultAsync();
 
+                ViewBag.ListaDeCategorias = _context.ListaDeCategorias.OrderBy(c => c.Nome).ToList();
+
                 if (favorito == null) {
                     ViewBag.Carrinho = false;
                 } else {
@@ -84,10 +87,8 @@ namespace PCore.Controllers
             }
 
 
-
             return View(componente);
         }
-
 
 
         /// <summary>
@@ -162,6 +163,7 @@ namespace PCore.Controllers
         // GET: Componentes/Create
         public IActionResult Create()
         {
+
             ViewBag.ListaDeCategorias = _context.ListaDeCategorias.OrderBy(c => c.IdCategorias).ToList();
             return View();
         }
@@ -199,9 +201,6 @@ namespace PCore.Controllers
             componentes.ListaDeCategorias = listaDeCategoriasEscolhidas;
 
 
-
-
-
             componentes.Foto = imgFile.FileName;
 
             //_webhost.WebRootPath vai ter o path para a pasta wwwroot
@@ -234,55 +233,128 @@ namespace PCore.Controllers
             {
                 return NotFound();
             }
-            ViewBag.ListaDeCategorias = _context.ListaDeCategorias.OrderBy(c => c.IdCategorias).ToList();
-            var componentes = await _context.Componentes.FindAsync(id);
+
+            //ViewBag.ListaDeCategorias = _context.ListaDeCategorias.OrderBy(c => c.IdCategorias).ToList();
+            
+            var componentes = await _context.Componentes
+                                            .Include(l => l.ListaDeCategorias)
+                                            .FirstOrDefaultAsync(m => m.IdComponentes == id);
+
+
             if (componentes == null)
             {
                 return NotFound();
             }
+
+            ViewBag.ListaDeCategorias = _context.ListaDeCategorias.OrderBy(c => c.Nome).ToList();
+
             return View(componentes);
         }
+
 
         // POST: Componentes/Edit/5
         // To protect from overposting attacks, enable the specific properties you want to bind to.
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
+
+
+        /// <summary>
+        /// Edição dos dados de uma Lesson
+        /// </summary>
+        /// <param name="id">Id da Componente</param>
+        /// <param name="newComponentes">novos dados a associar à Lesson</param>
+        /// <param name="CategoriaEscolhida">Lista de Categorias a que a Lesson deve estar associada</param>
+        /// <returns></returns>
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("IdComponentes,Nome,Foto,Descricao,Categoria,Preco,Stock")] Componentes componentes,
+        public async Task<IActionResult> Edit(int id, [Bind("IdComponentes,Nome,Foto,Descricao,Categoria,Preco,Stock")] Componentes newComponentes,
             IFormFile imgFile, int[] CategoriaEscolhida)
         {
-            if (id != componentes.IdComponentes) {
+            if (id != newComponentes.IdComponentes) {
                 return NotFound();
             }
+
+
+            // dados anteriormente guardados do componente
+            var componentes = await _context.Componentes
+                                       .Where(l => l.IdComponentes == id)
+                                       .Include(l => l.ListaDeCategorias)
+                                       .FirstOrDefaultAsync();
+
+            // obter a lista dos IDs das Categorias associadas ao componente, antes da edição
+            var oldListaCategorias = componentes.ListaDeCategorias
+                                           .Select(c => c.IdCategorias)
+                                           .ToList();
+
+            // avaliar se o utilizador alterou alguma categoria associada ao componente
+            // adicionadas -> lista de categorias adicionadas
+            // retiradas   -> lista de categorias retiradas
+            var adicionadas = CategoriaEscolhida.Except(oldListaCategorias);
+            var retiradas = oldListaCategorias.Except(CategoriaEscolhida.ToList());
+
+            // se alguma Category foi adicionada ou retirada
+            // é necessário alterar a lista de categorias 
+            // associada à Lesson
+            if (adicionadas.Any() || retiradas.Any())
+            {
+
+                if (retiradas.Any())
+                {
+                    // retirar a Category 
+                    foreach (int oldCategory in retiradas)
+                    {
+                        var categoryToRemove = componentes.ListaDeCategorias.FirstOrDefault(c => c.IdCategorias == oldCategory);
+                        componentes.ListaDeCategorias.Remove(categoryToRemove);
+                    }
+                }
+                if (adicionadas.Any())
+                {
+                    // adicionar a Categoria 
+                    foreach (int newCategory in adicionadas)
+                    {
+                        var categoryToAdd = await _context.ListaDeCategorias.FirstOrDefaultAsync(c => c.IdCategorias == newCategory);
+                        componentes.ListaDeCategorias.Add(categoryToAdd);
+                    }
+                }
+            }
+
+                // avalia se o array com a lista de categorias escolhidas associadas ao Componente está vazio ou não
+                if (CategoriaEscolhida.Length == 0) {
+                    //É gerada uma mensagem de erro
+                    ModelState.AddModelError("", "É necessário selecionar pelo menos uma categoria.");
+                    // gerar a lista Categorias que podem ser associadas ao Componente
+                    ViewBag.ListaDeCategorias = _context.ListaDeCategorias.OrderBy(c => c.IdCategorias).ToList();
+                    // devolver controlo à View
+                    return View(newComponentes);
+                }
+
             // avalia se o array com a lista de categorias escolhidas associadas ao Componente está vazio ou não
-            if (CategoriaEscolhida.Length == 0) {
+            if (CategoriaEscolhida.Length < 1)
+            {
                 //É gerada uma mensagem de erro
-                ModelState.AddModelError("", "É necessário selecionar pelo menos uma categoria.");
+                ModelState.AddModelError("", "Selecione apenas uma categoria.");
                 // gerar a lista Categorias que podem ser associadas ao Componente
                 ViewBag.ListaDeCategorias = _context.ListaDeCategorias.OrderBy(c => c.IdCategorias).ToList();
                 // devolver controlo à View
-                return View(componentes);
+                return View(newComponentes);
             }
 
             // criar uma lista com os objetos escolhidos das Categorias
             List<Categorias> listaDeCategoriasEscolhidas = new List<Categorias>();
-            // Para cada objeto escolhido..
-            foreach (int item in CategoriaEscolhida) {
-                //procurar a categoria
-                Categorias Categoria = _context.ListaDeCategorias.Find(item);
-                // adicionar a Categoria à lista
-                listaDeCategoriasEscolhidas.Add(Categoria);
-            }
+                // Para cada objeto escolhido..
+                foreach (int item in CategoriaEscolhida) {
+                    //procurar a categoria
+                    Categorias Categoria = _context.ListaDeCategorias.Find(item);
+                    // adicionar a Categoria à lista
+                    listaDeCategoriasEscolhidas.Add(Categoria);
+                }
 
-            // adicionar a lista ao objeto de "Componente"
-            componentes.ListaDeCategorias = listaDeCategoriasEscolhidas;
-
-
-
+                // adicionar a lista ao objeto de "Componente"
+                newComponentes.ListaDeCategorias = listaDeCategoriasEscolhidas;
+            
 
             /**************************************************/
             if (imgFile !=null) {
-                componentes.Foto = imgFile.FileName;
+                newComponentes.Foto = imgFile.FileName;
 
                 //_webhost.WebRootPath vai ter o path para a pasta wwwroot
                 var saveimg = Path.Combine(_caminho.WebRootPath, "fotos", imgFile.FileName);
@@ -296,23 +368,52 @@ namespace PCore.Controllers
                     }
                 }
             } else {
-                Componentes componentes1 = _context.Componentes.Find(componentes.IdComponentes);
+                Componentes componentes1 = _context.Componentes.Find(newComponentes.IdComponentes);
 
                 _context.Entry<Componentes>(componentes1).State = EntityState.Detached;
 
 
-                componentes.Foto = componentes1.Foto;
+                newComponentes.Foto = componentes1.Foto;
             }
             
             /***************************************************/
             if (ModelState.IsValid) {
-                _context.Update(componentes);
-                await _context.SaveChangesAsync();
+                try { 
+                    /* a EF só permite a manipulação de um único objeto de um mesmo tipo
+                     *  por esse motivo, como estamos a usar o objeto 'componente'
+                     *  temos de o atualizar com os dados que vêm da View
+                     */
+                    
+                    componentes.Nome = newComponentes.Nome;
+                    componentes.Descricao = newComponentes.Descricao;
+                    componentes.Preco = newComponentes.Preco;
+                    componentes.Stock = newComponentes.Stock;
+                    componentes.Foto = newComponentes.Foto;
 
-                return RedirectToAction(nameof(Index));
 
+                    // adição do objeto 'componente' para atualização
+                    _context.Update(componentes);
+                     // 'commit' da atualização
+                     await _context.SaveChangesAsync();
+                }
+                catch (DbUpdateConcurrencyException)
+                {
+                    if (!ComponentesExists(componentes.IdComponentes))
+                    {
+                        return NotFound();
+                    }
+                    else
+                    {
+                        throw;
+                    }
+                }
+           // _context.Update(newComponentes);
+            //    await _context.SaveChangesAsync();
+
+                
+                return RedirectToAction(nameof(Index));    
             }
-            return View(componentes);
+            return View(newComponentes);
         }
 
         // GET: Componentes/Delete/5
@@ -323,14 +424,21 @@ namespace PCore.Controllers
                 return NotFound();
             }
 
-            var filmes = await _context.Componentes
+            var componente = await _context.Componentes
+                                   .Include(l => l.ListaDeCategorias)
+                                   .FirstOrDefaultAsync(m => m.IdComponentes == id);
+
+
+            var componentes = await _context.Componentes
                 .FirstOrDefaultAsync(m => m.IdComponentes == id);
-            if (filmes == null)
+            if (componentes == null)
             {
                 return NotFound();
             }
 
-            return View(filmes);
+            ViewBag.ListaDeCategorias = _context.ListaDeCategorias.OrderBy(c => c.Nome).ToList();
+
+            return View(componentes);
         }
 
         // POST: Componentes/Delete/5
@@ -338,8 +446,8 @@ namespace PCore.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var filmes = await _context.Componentes.FindAsync(id);
-            _context.Componentes.Remove(filmes);
+            var componentes = await _context.Componentes.FindAsync(id);
+            _context.Componentes.Remove(componentes);
             await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
         }
