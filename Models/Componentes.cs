@@ -61,12 +61,6 @@ namespace PCore.Models
         [Required]
         public int Stock { get; set; }
 
-        /// <summary>
-        /// Pontuação do componente
-        /// </summary>
-        [Required]
-        [Display(Name = "Pontuação")]
-        public double Pontuacao { get; set; }
 
         /// <summary>
         /// Lista das reviews dos componentes
