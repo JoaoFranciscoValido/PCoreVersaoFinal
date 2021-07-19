@@ -187,6 +187,17 @@ namespace PCore.Controllers
                 return View(componentes);
             }
 
+            // avalia se o array com a lista de categorias escolhidas associadas ao Componente está vazio ou não
+            if (CategoriaEscolhida.Length < 1)
+            {
+                //É gerada uma mensagem de erro
+                ModelState.AddModelError("", "Selecione apenas uma categoria.");
+                // gerar a lista Categorias que podem ser associadas ao Componente
+                ViewBag.ListaDeCategorias = _context.ListaDeCategorias.OrderBy(c => c.IdCategorias).ToList();
+                // devolver controlo à View
+                return View(componentes);
+            }
+
             // criar uma lista com os objetos escolhidos das Categorias
             List<Categorias> listaDeCategoriasEscolhidas = new List<Categorias>();
             // Para cada objeto escolhido..
